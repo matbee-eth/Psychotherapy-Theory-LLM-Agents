@@ -1,3 +1,4 @@
+import os
 from autogen_emotional_agent import AutoGenControlRoom
 from base_agents import (
     EmotionalAgent,
@@ -157,10 +158,10 @@ async def test_autogen_enhancement():
         "config_list": [
             {
                 "model": "gpt-4",
-                "api_key": "YOUR_API_KEY"  # Replace with actual key
+                "api_key": os.environ["OPENAI_API_KEY"]  # Replace with actual key
             }
         ],
-        "temperature": 0.7
+        "temperature": 0.0
     }
     
     # Create control room with Alex's configuration
@@ -172,15 +173,16 @@ async def test_autogen_enhancement():
     # Test message
     message = "I've been feeling anxious about my new job, but I'm excited about the opportunity."
     
-    # Process through enhanced system
-    result = await autogen_system.process_input(
-        message=message,
-        context={}
-    )
+    # Process message
+    response = await autogen_system.process_input(message)
     
-    print("Response:", result["response"])
-    print("\nEmotional States:", result["emotional_states"])
-    print("\nInternal Dialogue:", result["dialogue"])
+    print("\nResponse:", response)
+    print("\nDialogue:")
+    for msg in autogen_system.groupchat.messages:
+        if msg["role"] == "assistant":
+            print(f"\n{msg['name']}:")
+            print(msg['content'].replace('TERMINATE', ''))
+
 
 if __name__ == "__main__":
     import asyncio

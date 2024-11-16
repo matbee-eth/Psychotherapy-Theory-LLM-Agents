@@ -62,200 +62,155 @@ class AutoGenEmotionalAgent(autogen.AssistantAgent):
             memory_str += f"- {m['timestamp']}: {m['message'][:100]}...\n"
         return memory_str
 
-class AutoGenControlRoom(SocietyOfMindAgent):
-    """Enhanced ControlRoom using AutoGen's SocietyOfMindAgent"""
+from typing import Dict, Optional
+import autogen
+from autogen.agentchat.contrib.society_of_mind_agent import SocietyOfMindAgent
+
+class AutoGenControlRoom:
+    """Enhanced ControlRoom using AutoGen's SocietyOfMindAgent pattern"""
     
     def __init__(
         self,
         control_room: ControlRoom,
         llm_config: dict
     ):
-        # Wrap emotional agents with AutoGen
-        self.autogen_agents = [
-            AutoGenEmotionalAgent(agent, llm_config)
-            for agent in control_room.emotional_agents.values()
-        ]
+        self.control_room = control_room
+        self.llm_config = llm_config
         
-        # Create group chat for internal dialogue
+        # Initialize the agents and chat structure
+        self._setup_agents()
+        self._setup_chat()
+        self._setup_society()
+    
+    def _setup_agents(self):
+        """Create the assistant agents for each emotion"""
+        # Create emotional assistants
+        self.emotional_assistants = {}
+        for emotion, agent in self.control_room.emotional_agents.items():
+            # Create assistant for this emotion
+            print("AutoGenControlRoom _setup_agents: Creating assistant for", emotion.value)
+            assistant = autogen.AssistantAgent(
+                name=f"{emotion.value}_agent",
+                system_message=self._create_agent_system_message(agent),
+                llm_config=self.llm_config,
+                is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
+            )
+            self.emotional_assistants[emotion] = assistant
+
+        # Create user proxy
+        self.user_proxy = autogen.UserProxyAgent(
+            name="user_proxy",
+            human_input_mode="NEVER",
+            code_execution_config=False,
+            default_auto_reply="",
+            is_termination_msg=lambda x: True
+        )
+
+    def _setup_chat(self):
+        """Set up the group chat configuration"""
+        # Create list of agents for group chat
+        agents = list(self.emotional_assistants.values())
+        print("Setting up group chat with agents:", agents)
+        # Create group chat with specific configuration
         self.groupchat = autogen.GroupChat(
-            agents=self.autogen_agents,
+            agents=agents,
             messages=[],
             speaker_selection_method="round_robin",
-            max_round=5
+            allow_repeat_speaker=False,
+            max_round=len(agents)  # One round per emotion
         )
         
-        # Create chat manager
+        # Create group chat manager
         self.manager = autogen.GroupChatManager(
             groupchat=self.groupchat,
-            llm_config=llm_config
+            llm_config=self.llm_config,
+            is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0
         )
-        
-        # Initialize SocietyOfMindAgent
-        super().__init__(
-            name="alex_mind",
-            chat_manager=self.manager,
-            llm_config=llm_config
-        )
-        
-        # Store original control room
-        self.control_room = control_room
-        
-        # Add initiation message
-        self._add_initiation_message()
 
-    async def process_input(self, message: str, context: Dict) -> Dict[str, Any]:
-        """Process input through AutoGen enhanced system"""
+    def _setup_society(self):
+        """Set up the Society of Mind agent"""
+        self.society = SocietyOfMindAgent(
+            name="emotional_society",
+            chat_manager=self.manager,
+            llm_config=self.llm_config
+        )
+
+    def _create_agent_system_message(self, agent: EmotionalAgent) -> str:
+        """Create the system message for an emotional agent"""
+        return f"""You are the {agent.emotion.value} aspect of Alex's personality.
+
+Your current state:
+- Emotion: {agent.emotion.value}
+- Confidence: {agent.state.confidence:.2f}
+- Influence: {agent.state.influence:.2f}
+- Energy: {agent.state.energy:.2f}
+
+Alex's personality traits:
+- Openness: {agent.personality.openness:.2f}
+- Conscientiousness: {agent.personality.conscientiousness:.2f}
+- Extraversion: {agent.personality.extraversion:.2f}
+- Agreeableness: {agent.personality.agreeableness:.2f}
+- Neuroticism: {agent.personality.neuroticism:.2f}
+
+Your role is to process messages from your emotional perspective. When responding:
+1. Start with "As the {agent.emotion.value} aspect:"
+2. Share how the message makes you feel from your emotional perspective
+3. Suggest how to respond based on your emotional viewpoint
+4. Explain your reasoning
+5. Consider how your emotion interacts with others
+"""
+
+    async def process_input(self, message: str, context: Optional[Dict] = None) -> Dict:
+        """Process input through emotional dialogue"""
+        context = context or {}
+        
         try:
-            # Create processing context
-            processing_context = self._create_processing_context(message, context)
+            # Prepare the processing prompt
+            prompt = f"""Process this message collaboratively through emotional perspectives.
+
+MESSAGE: {message}
+
+Each emotional aspect:
+1. Share your emotional perspective
+2. Suggest appropriate responses
+3. Consider interactions with other emotions
+4. Work towards an emotional consensus
+
+Share your perspective."""
             
-            # Run internal dialogue
-            chat_result = await self.manager.run(processing_context)
+            # Clear previous messages
+            self.groupchat.messages = []
             
-            # Extract response and emotional states
-            response, emotional_states = self._extract_dialogue_results(chat_result)
+            # Start the dialogue
+            result = await self.user_proxy.a_initiate_chat(
+                self.society,
+                message=prompt
+            )
             
-            # Update control room state
-            self.control_room._update_emotional_states(emotional_states)
-            
-            # Process through original control room
+            # Extract dialogue
+            dialogue = []
+            for msg in self.groupchat.messages:
+                if msg["role"] == "assistant":
+                    name = msg.get("name", "unknown")
+                    content = msg["content"].replace("TERMINATE", "").strip()
+                    dialogue.append(f"{name}: {content}")
+
+            # Get final response through control room
             final_response = await self.control_room.process_input(
                 message=message,
-                context={
-                    **context,
-                    "autogen_dialogue": chat_result,
-                    "emotional_states": emotional_states
-                }
+                context=context
             )
             
             return {
                 "response": final_response,
-                "emotional_states": emotional_states,
-                "dialogue": chat_result
+                "dialogue": dialogue,
+                "raw_messages": self.groupchat.messages
             }
             
         except Exception as e:
-            print(f"Error in AutoGen processing: {str(e)}")
-            # Fallback to original control room
-            return await self.control_room.process_input(message, context)
-
-    def _create_processing_context(self, message: str, context: Dict) -> str:
-        """Create context for internal dialogue"""
-        return f"""Process this message considering all emotional perspectives:
-
-Message: {message}
-
-Current State:
-{self._format_current_state()}
-
-Instructions:
-1. Each emotional agent should evaluate the message
-2. Consider emotional impact and appropriate responses
-3. Discuss response options
-4. Come to consensus on best approach
-5. Provide final response with emotional state updates
-
-Format your responses as:
-EMOTION: [your emotion]
-ANALYSIS: [your analysis]
-SUGGESTION: [your suggested response]
-EMOTIONAL_STATE: [your updated state]"""
-
-    def _format_current_state(self) -> str:
-        """Format current state for context"""
-        state = []
-        for agent in self.autogen_agents:
-            state.append(f"""
-{agent.name.upper()}:
-- Confidence: {agent.emotional_agent.state.confidence}
-- Influence: {agent.emotional_agent.state.influence}
-- Energy: {agent.emotional_agent.state.energy}
-""")
-        return "\n".join(state)
-
-    def _extract_dialogue_results(
-        self,
-        chat_result: List[Dict]
-    ) -> tuple[str, Dict[EmotionalState, float]]:
-        """Extract response and emotional states from dialogue"""
-        # Process dialogue to extract consensus response
-        # This is a simplified version - would need more sophisticated
-        # analysis in production
-        final_message = chat_result[-1]["content"]
-        response = self._extract_response(final_message)
-        
-        # Extract emotional states from dialogue
-        emotional_states = self._extract_emotional_states(chat_result)
-        
-        return response, emotional_states
-
-    def _extract_response(self, message: str) -> str:
-        """Extract final response from message"""
-        # Implementation would parse the formatted response
-        # This is a placeholder
-        return message.split("SUGGESTION:")[-1].split("EMOTIONAL_STATE:")[0].strip()
-
-    def _extract_emotional_states(
-        self,
-        chat_result: List[Dict]
-    ) -> Dict[EmotionalState, float]:
-        """Extract emotional states from dialogue"""
-        # Implementation would track emotional state changes
-        # This is a placeholder
-        return {
-            EmotionalState.HAPPY: 0.5,
-            EmotionalState.SAD: 0.2,
-            EmotionalState.ANGRY: 0.1,
-            EmotionalState.NEUTRAL: 0.2
-        }
-
-    def _add_initiation_message(self) -> None:
-        """Add initial message to group chat"""
-        self.groupchat.messages.append({
-            "role": "system",
-            "content": """You are part of an emotional processing system.
-            Work together to evaluate messages and generate appropriate responses.
-            Consider all emotional perspectives while maintaining personality consistency."""
-        })
-
-# Example usage
-async def test_autogen_enhancement():
-    # Initialize with LLM config
-    llm_config = {
-        "timeout": 600,
-        "cache_seed": 42,
-        "config_list": [
-            {
-                "model": "gpt-4",
-                "api_key": "YOUR_API_KEY"  # Replace with actual key
+            print(f"Error processing message: {str(e)}")
+            return {
+                "response": "I understand. Could you tell me more about that?",
+                "dialogue": [],
+                "raw_messages": []
             }
-        ],
-        "temperature": 0.7
-    }
-    
-    # Create original control room
-    # (This would use your existing initialization code)
-    control_room = ControlRoom(
-        emotional_agents=[],  # Add your emotional agents
-        theory_agents=[]      # Add your theory agents
-    )
-    
-    # Create AutoGen enhanced system
-    autogen_system = AutoGenControlRoom(control_room, llm_config)
-    
-    # Test message
-    message = "I've been feeling anxious about my new job, but I'm excited about the opportunity."
-    
-    # Process through enhanced system
-    result = await autogen_system.process_input(
-        message=message,
-        context={}
-    )
-    
-    print("Response:", result["response"])
-    print("\nEmotional States:", result["emotional_states"])
-    print("\nInternal Dialogue:", result["dialogue"])
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(test_autogen_enhancement())
