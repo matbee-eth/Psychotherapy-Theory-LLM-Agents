@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from enhanced_memory_system import MemoryManager, Memory, MemoryType, MemoryPriority
+from memory.enhanced_memory_system import MemoryManager, Memory, MemoryType, MemoryPriority
 from base_agents import EmotionalAgent, TheoryAgent, ControlRoom, EmotionalState
 from personality_framework import PersonalityFramework
 
