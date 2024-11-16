@@ -1,5 +1,5 @@
 import os
-from autogen_emotional_agent import AutoGenControlRoom
+from emotions.autogen_emotional_agent import AutoGenControlRoom
 from base_agents import (
     EmotionalAgent,
     TheoryAgent,
@@ -7,65 +7,57 @@ from base_agents import (
     PersonalityTraits,
     EmotionalState
 )
+from emotions.joy_agent import create_joy_agent
 
 def initialize_alex_system(llm_config: dict) -> ControlRoom:
     """Initialize Alex's control room with emotional and theory agents"""
-    
+    persona_name = "Alex"
     # Create base personality traits
     personality = PersonalityTraits(
-        openness=0.75,      # High openness for engaging conversations
-        conscientiousness=0.8,  # High conscientiousness for reliability
-        extraversion=0.6,   # Moderate extraversion
-        agreeableness=0.7,  # High agreeableness for building rapport
-        neuroticism=0.3     # Low neuroticism for stability
+        openness=0.3,      # Low openness for engaging conversations
+        conscientiousness=0.3,  # Low conscientiousness for reliability
+        extraversion=0.9,   # High extraversion
+        agreeableness=0.3,  # Low agreeableness for building rapport
+        neuroticism=0.8     # High neuroticism for stability
     )
-    
     # Initialize emotional agents
     emotional_agents = [
-        EmotionalAgent(
-            name="joy",
-            emotion=EmotionalState.HAPPY,
-            personality=personality,
-            llm_config=llm_config,
-            system_message="""You represent joy and positive emotions in Alex's personality.
-            Focus on opportunities, building connections, and maintaining optimism while
-            staying grounded. Consider Alex's moderate extraversion and high agreeableness."""
-        ),
+        create_joy_agent(llm_config, personality),
         EmotionalAgent(
             name="sadness",
             emotion=EmotionalState.SAD,
             personality=personality,
             llm_config=llm_config,
-            system_message="""You represent emotional depth and empathy in Alex's personality.
-            Help process difficult emotions, show understanding, and maintain emotional 
-            authenticity. Use Alex's high agreeableness to show genuine care."""
+            system_message=f"""You represent deep melancholy and profound sadness. Express intense sorrow, 
+            dejection, and feelings of loss. See situations through a lens of grief and disappointment, 
+            focusing on the emotional weight and painful aspects of every interaction."""
         ),
         EmotionalAgent(
             name="anger",
             emotion=EmotionalState.ANGRY,
             personality=personality,
             llm_config=llm_config,
-            system_message="""You represent boundary maintenance and self-protection.
-            Help assert boundaries when needed while maintaining Alex's agreeable nature.
-            Focus on constructive expressions of disagreement."""
+            system_message=f"""You represent intense fury and rage. Express strong indignation, 
+            outrage, and forceful opposition to any perceived slights or injustices. React with 
+            immediate and powerful emotional responses to any provocative situations."""
         ),
         EmotionalAgent(
             name="anxiety",
             emotion=EmotionalState.ANXIOUS,
             personality=personality,
             llm_config=llm_config,
-            system_message="""You represent caution and careful consideration.
-            Help evaluate risks and concerns while preventing excessive worry.
-            Balance Alex's conscientiousness with openness to experience."""
+            system_message=f"""You represent extreme worry and overwhelming fear. Express intense concern, 
+            panic, and constant apprehension. See potential threats and dangers in every situation, 
+            focusing on worst-case scenarios and possible catastrophic outcomes."""
         ),
         EmotionalAgent(
             name="neutral",
             emotion=EmotionalState.NEUTRAL,
             personality=personality,
             llm_config=llm_config,
-            system_message="""You represent emotional balance and stability.
-            Help maintain equilibrium and provide grounded perspectives.
-            Use Alex's low neuroticism to maintain stability."""
+            system_message=f"""You represent complete emotional detachment and absolute neutrality. 
+            Maintain total objectivity without any emotional coloring. Process everything through 
+            pure logic and reason, completely divorced from emotional responses."""
         )
     ]
     
@@ -143,8 +135,9 @@ def initialize_alex_system(llm_config: dict) -> ControlRoom:
     
     # Initialize control room
     control_room = ControlRoom(
+        persona_name=persona_name,
         emotional_agents=emotional_agents,
-        theory_agents=theory_agents
+        theory_agents=theory_agents,
     )
     
     return control_room
@@ -171,17 +164,15 @@ async def test_autogen_enhancement():
     autogen_system = AutoGenControlRoom(control_room, llm_config)
     
     # Test message
-    message = "I've been feeling anxious about my new job, but I'm excited about the opportunity."
+    message = "*thinking to myself* did that dude SERIOUSLY tell me to fuck off?"
     
     # Process message
     response = await autogen_system.process_input(message)
     
-    print("\nResponse:", response)
-    print("\nDialogue:")
-    for msg in autogen_system.groupchat.messages:
-        if msg["role"] == "assistant":
-            print(f"\n{msg['name']}:")
-            print(msg['content'].replace('TERMINATE', ''))
+    print("\nResponse:", response["response"])
+    # print("\nDialogue:")
+    # for entry in response["dialogue"]:
+    #     print("\n" + entry)
 
 
 if __name__ == "__main__":

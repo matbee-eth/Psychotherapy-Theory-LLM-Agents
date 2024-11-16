@@ -72,15 +72,17 @@ class AutoGenControlRoom:
     def __init__(
         self,
         control_room: ControlRoom,
-        llm_config: dict
+        llm_config: dict,
+        persona_name: str = "Alex"
     ):
         self.control_room = control_room
         self.llm_config = llm_config
+        self.persona_name = persona_name
         
         # Initialize the agents and chat structure
         self._setup_agents()
         self._setup_chat()
-        self._setup_society()
+        # self._setup_society()
     
     def _setup_agents(self):
         """Create the assistant agents for each emotion"""
@@ -137,7 +139,7 @@ class AutoGenControlRoom:
 
     def _create_agent_system_message(self, agent: EmotionalAgent) -> str:
         """Create the system message for an emotional agent"""
-        return f"""You are the {agent.emotion.value} aspect of Alex's personality.
+        return f"""You are the {agent.emotion.value} aspect of {self.persona_name}'s personality.
 
 Your current state:
 - Emotion: {agent.emotion.value}
@@ -145,7 +147,7 @@ Your current state:
 - Influence: {agent.state.influence:.2f}
 - Energy: {agent.state.energy:.2f}
 
-Alex's personality traits:
+{self.persona_name}'s personality traits:
 - Openness: {agent.personality.openness:.2f}
 - Conscientiousness: {agent.personality.conscientiousness:.2f}
 - Extraversion: {agent.personality.extraversion:.2f}
@@ -183,17 +185,19 @@ Share your perspective."""
             
             # Start the dialogue
             result = await self.user_proxy.a_initiate_chat(
-                self.society,
+                self.manager,
                 message=prompt
             )
             
-            # Extract dialogue
+            # Extract dialogue  
             dialogue = []
-            for msg in self.groupchat.messages:
-                if msg["role"] == "assistant":
-                    name = msg.get("name", "unknown")
-                    content = msg["content"].replace("TERMINATE", "").strip()
-                    dialogue.append(f"{name}: {content}")
+            for agent, messages in self.manager.chat_messages.items():
+                for msg in messages:
+                    if msg.get("role") in ["assistant"]:
+                        name = msg.get("name", "unknown")
+                        content = msg.get("content", "").replace("TERMINATE", "").strip()
+                        dialogue.append(f"{name}: {content}")
+                        # print(f"{name}: {content}")
 
             # Get final response through control room
             final_response = await self.control_room.process_input(
@@ -208,7 +212,10 @@ Share your perspective."""
             }
             
         except Exception as e:
-            print(f"Error processing message: {str(e)}")
+            import traceback
+            print(f"Error in AutoGenControlRoom process_input: {str(e)}")
+            print("Stack trace:") 
+            print(traceback.format_exc())
             return {
                 "response": "I understand. Could you tell me more about that?",
                 "dialogue": [],

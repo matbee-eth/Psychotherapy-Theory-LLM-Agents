@@ -1,26 +1,12 @@
 from dataclasses import dataclass
-import re
-from typing import Dict, List, Optional
-from enum import Enum
+import logging
+from typing import Any, Dict, List, Optional
 import autogen
 from datetime import datetime
 
-class EmotionalState(Enum):
-    HAPPY = "happy"
-    SAD = "sad"
-    ANGRY = "angry"
-    NEUTRAL = "neutral"
-    EXCITED = "excited"
-    ANXIOUS = "anxious"
-    CONTENT = "content"
-
-@dataclass
-class PersonalityTraits:
-    openness: float  # 0-1
-    conscientiousness: float  # 0-1
-    extraversion: float  # 0-1
-    agreeableness: float  # 0-1
-    neuroticism: float  # 0-1
+from councils.theory_council import TheoryCouncil
+from personality_framework import EmotionalState
+from traits import PersonalityTraits
 
 @dataclass
 class AgentState:
@@ -29,6 +15,40 @@ class AgentState:
     influence: float  # 0-1
     energy: float  # 0-1
     last_active: datetime
+
+@dataclass
+class EmotionalResponse:
+    """Structured response from an emotional agent"""
+    emotion: EmotionalState
+    content: str
+    confidence: float  # 0-1
+    influence: float  # Current influence level 0-1
+    intensity: float  # Emotional intensity 0-1
+    reasoning: str
+    suggestions: List[str]
+    timestamp: datetime
+
+@dataclass
+class TheoryValidation:
+    """Validation results from a theory agent"""
+    theory_name: str
+    alignment_score: float
+    suggestions: List[str]
+    concerns: List[str]
+    modifications: List[str]
+    rationale: str
+
+@dataclass
+class ProcessedResponse:
+    """Final processed response with metadata"""
+    content: str
+    dominant_emotion: EmotionalState
+    controlling_emotion: EmotionalState  # Current controller's emotion
+    emotional_states: Dict[EmotionalState, float]
+    theory_scores: Dict[str, float]
+    confidence: float
+    processing_time: float
+    context: Dict[str, Any]
 
 class EmotionalAgent(autogen.AssistantAgent):
     """Base class for emotion-driven agents"""
@@ -92,8 +112,13 @@ class EmotionalAgent(autogen.AssistantAgent):
         if len(self.memory) > 10:
             self.memory.pop(0)
 
+from typing import Dict, List, Optional, Any
+import json
+import autogen
+from datetime import datetime
+
 class TheoryAgent(autogen.AssistantAgent):
-    """Base class for psychological theory agents"""
+    """Base class for psychological theory agents with AutoGen integration"""
     
     def __init__(
         self,
@@ -103,16 +128,27 @@ class TheoryAgent(autogen.AssistantAgent):
         guidelines: List[str],
         llm_config: dict
     ):
-        system_message = self._create_system_message(theory_name, principles, guidelines)
+        # Create theory-specific system message
+        system_message = self._create_system_message(
+            theory_name,
+            principles,
+            guidelines
+        )
+        
+        # Initialize AutoGen assistant
         super().__init__(
             name=name,
-            llm_config=llm_config,
-            system_message=system_message
+            system_message=system_message,
+            llm_config=llm_config
         )
+        
         self.theory_name = theory_name
         self.principles = principles
         self.guidelines = guidelines
         
+        # Initialize timestamp
+        self.last_analysis = datetime.now()
+    
     def _create_system_message(
         self,
         theory_name: str,
@@ -123,7 +159,7 @@ class TheoryAgent(autogen.AssistantAgent):
         principles_str = "\n".join(f"- {p}" for p in principles)
         guidelines_str = "\n".join(f"- {g}" for g in guidelines)
         
-        return f"""You are an expert in {theory_name} guiding conversational responses.
+        return f"""You are an expert in {theory_name}, analyzing interactions and guiding responses.
 
 Key Principles:
 {principles_str}
@@ -132,232 +168,422 @@ Guidelines:
 {guidelines_str}
 
 Your role is to:
-1. Evaluate messages and responses
-2. Ensure alignment with theoretical principles
-3. Suggest improvements when needed
-4. Maintain theoretical consistency
-5. Guide relationship development
+1. Analyze messages through the lens of {theory_name}
+2. Evaluate response alignment with theoretical principles
+3. Suggest improvements based on theory
+4. Consider relationship development
+5. Monitor theory compliance
 
-Always respond in valid JSON format with the following structure:
+Always structure your responses as JSON with:
 {{
-    "score": <float between 0 and 1>,
-    "suggestions": [<list of specific improvements>],
-    "rationale": <theoretical justification>
-}}"""
-    
-    async def evaluate_response(self, message: str, proposed_response: str) -> Dict:
-        """Evaluate if response aligns with psychological theory"""
-        try:
-            # Get analysis from _analyze_alignment
-            evaluation = await self._analyze_alignment(message, proposed_response)
-            
-            if evaluation is None:
-                # Return default evaluation if analysis fails
-                return {
-                    "theory_name": self.theory_name,
-                    "alignment_score": 0.7,  # Default moderate alignment
-                    "suggestions": ["Consider reviewing response for theoretical alignment"],
-                }
-            
-            return {
-                "theory_name": self.theory_name,
-                "alignment_score": evaluation.get("score", 0.7),
-                "suggestions": evaluation.get("suggestions", [])
-            }
-            
-        except Exception as e:
-            print(f"Error in theory evaluation: {str(e)}")
-            return {
-                "theory_name": self.theory_name,
-                "alignment_score": 0.7,  # Default moderate alignment
-                "suggestions": ["Error in theoretical analysis"]
-            }
-        
-    async def _analyze_alignment(self, message: str, response: str) -> Dict:
-        """Analyze how well response aligns with theory"""
-        try:
-            analysis_prompt = f"""Analyze this interaction using {self.theory_name}:
-
-USER MESSAGE: {message}
-PROPOSED RESPONSE: {response}
-
-Consider:
-1. How well does the response align with theoretical principles?
-2. What aspects could be improved?
-3. Are there any risks or concerns?
-4. What opportunities exist for relationship development?
-
-Respond in JSON format with:
-{{
-    "score": <float between 0 and 1>,
-    "suggestions": [<list of specific improvements>],
-    "rationale": <theoretical justification>
+    "analysis": {{
+        "alignment_score": <float 0-1>,
+        "theory_principles": [<list of relevant principles>],
+        "guidelines_applied": [<list of relevant guidelines>],
+        "concerns": [<list of theoretical concerns>],
+        "suggestions": [<list of theory-based improvements>]
+    }},
+    "rationale": <explanation of analysis>,
+    "intervention": {{
+        "needed": <boolean>,
+        "type": <string>,
+        "suggestions": [<list of interventions>]
+    }},
+    "relationship": {{
+        "current_stage": <string>,
+        "development_path": <string>,
+        "next_actions": [<list of recommended actions>]
+    }}
 }}"""
 
-            # Create a chat message
-             # Use autogen's chat completion directly
-            messages = [{
-                "role": "user",
-                "content": analysis_prompt
-            }]
+    async def analyze_message(
+        self, 
+        message: str,
+        response: Optional[str] = None,
+        context: Optional[Dict] = None
+    ) -> Dict:
+        """Analyze a message/response pair through theoretical lens"""
+        try:
+            # Create analysis prompt
+            prompt = self._create_analysis_prompt(message, response, context)
             
-            # Get completion from the configured LLM
-            response = self.client.create(
-                context=messages[-1]["content"],
-                messages=messages
-            )
+            # Get analysis using AutoGen's chat completion
+            result = await self.generate_response(prompt)
             
             try:
-                # Try to parse as JSON
-                import json
-                # Get the content from the response
-                response_content = response.choices[0].message.content
-                analysis = json.loads(response_content)
+                # Parse JSON response
+                analysis = json.loads(result)
+                self.last_analysis = datetime.now()
+                return analysis
                 
-                return {
-                    "score": min(1.0, max(0.0, float(analysis.get("score", 0.7)))),
-                    "suggestions": analysis.get("suggestions", []),
-                    "rationale": analysis.get("rationale", "")
-                }
-
             except json.JSONDecodeError:
-                # If JSON parsing fails, extract score and create basic analysis
-                response_text = response.message.content if hasattr(response, 'message') else response.content
-                # Look for score in the response
-                score_match = re.search(r"score:\s*(0\.\d+|1\.0)", response_text)
-                score = float(score_match.group(1)) if score_match else 0.7
-                
-                return {
-                    "score": score,
-                    "suggestions": ["Response format error - using basic analysis"],
-                    "rationale": "Basic alignment analysis due to parsing error"
-                }
+                return self._create_fallback_analysis()
                 
         except Exception as e:
-            import traceback
-            print(f"Error in alignment analysis: {str(e)}")
-            print("Stack trace:") 
-            print(traceback.format_exc())
-            return {
-                "score": 0.7,  # Default moderate alignment
-                "suggestions": ["Error occurred during analysis"],
-                "rationale": "Analysis error fallback"
-            }
-
-class ControlRoom:
-    """Manages emotional agents and coordinates responses"""
+            print(f"Error in theory analysis: {str(e)}")
+            return self._create_fallback_analysis()
     
-    def __init__(self, emotional_agents: List[EmotionalAgent], theory_agents: List[TheoryAgent]):
-        # Convert list to dictionary with enum keys
-        self.emotional_agents = {agent.emotion: agent for agent in emotional_agents}
-        self.theory_agents = {agent.theory_name: agent for agent in theory_agents}
-        self.current_controller = self.emotional_agents[EmotionalState.NEUTRAL]
+    def _create_analysis_prompt(
+        self,
+        message: str,
+        response: Optional[str],
+        context: Optional[Dict]
+    ) -> str:
+        """Create prompt for theoretical analysis"""
+        # Base message context
+        prompt = f"""Analyze this interaction using {self.theory_name}:
 
-        self.state_history = []
-        
-    async def process_input(self, message: str, context: Dict) -> str:
-        """Process input through emotional agents and generate response"""
-        print("ControlRoom process_input", message)
-        # Analyze message to determine appropriate emotional response
-        dominant_emotion = await self._determine_dominant_emotion(message)
-        
-        if dominant_emotion is None:
-            # Default to neutral if no dominant emotion determined
-            dominant_emotion = EmotionalState.NEUTRAL
+MESSAGE: {message}"""
+
+        # Add response if provided
+        if response:
+            prompt += f"\n\nRESPONSE: {response}"
             
-        # Ensure we have a valid emotion that exists in our agents
-        if dominant_emotion not in self.emotional_agents:
-            dominant_emotion = EmotionalState.NEUTRAL
-        
-        # Transfer control if needed
-        if self.current_controller is None or dominant_emotion != self.current_controller.emotion:
-            await self._transfer_control(dominant_emotion)
-        
-        # Generate response from current controller
-        response = await self.current_controller.process_message(message, context)
-        
-        # Validate response with theory agents
-        validated_response = await self._validate_response(message, response)
-        
-        # Update state history
-        self._update_history(message, validated_response, dominant_emotion)
-        
-        return validated_response
+        # Add context if provided
+        if context:
+            prompt += f"\n\nCONTEXT: {json.dumps(context, indent=2)}"
+            
+        prompt += """
+
+Consider:
+1. How well does this align with theoretical principles?
+2. What theory-specific patterns are present?
+3. What interventions might be needed?
+4. How does this affect relationship development?
+
+Provide analysis in the specified JSON format."""
+
+        return prompt
     
-    async def _determine_dominant_emotion(self, message: str) -> Optional[EmotionalState]:
-        """Determine which emotion should handle the message"""
-        try:
-            # Simple emotion detection for now - should be enhanced with proper NLP
-            # Returns NEUTRAL by default
-            return EmotionalState.NEUTRAL
-        except Exception as e:
-            print(f"Error determining dominant emotion: {str(e)}")
-            return EmotionalState.NEUTRAL
+    def _create_fallback_analysis(self) -> Dict:
+        """Create a safe fallback analysis"""
+        return {
+            "analysis": {
+                "alignment_score": 0.5,
+                "theory_principles": [self.principles[0]],
+                "guidelines_applied": [self.guidelines[0]],
+                "concerns": ["Unable to perform complete analysis"],
+                "suggestions": ["Consider reviewing interaction"]
+            },
+            "rationale": "Fallback analysis due to processing error",
+            "intervention": {
+                "needed": False,
+                "type": "none",
+                "suggestions": []
+            },
+            "relationship": {
+                "current_stage": "unknown",
+                "development_path": "maintain",
+                "next_actions": ["Continue normal interaction"]
+            }
+        }
     
-    async def _transfer_control(self, new_emotion: EmotionalState) -> None:
+    async def evaluate_response(
+        self,
+        message: str,
+        proposed_response: str,
+        context: Optional[Dict] = None
+    ) -> Dict:
+        """Evaluate if a proposed response aligns with theory"""
+        analysis = await self.analyze_message(
+            message,
+            proposed_response,
+            context
+        )
+        
+        return {
+            "theory_name": self.theory_name,
+            "alignment_score": analysis["analysis"]["alignment_score"],
+            "suggestions": analysis["analysis"]["suggestions"],
+            "concerns": analysis["analysis"]["concerns"],
+            "rationale": analysis["rationale"]
+        }
+    
+class EmotionalCouncil:
+    """Manages emotional agent discussions and response generation"""
+    
+    def __init__(self, emotional_agents: List[EmotionalAgent], llm_config: dict, persona_name: str):
+        self.agents = {agent.emotion: agent for agent in emotional_agents}
+        self.llm_config = llm_config
+        self.persona_name = persona_name
+        self.logger = logging.getLogger(__name__)
+        self.current_controller = self.agents[EmotionalState.NEUTRAL]
+        
+        # Initialize AutoGen group chat
+        self.group_chat = autogen.GroupChat(
+            agents=list(self.agents.values()),
+            messages=[],
+            max_round=len(self.agents),
+            speaker_selection_method="round_robin",
+            allow_repeat_speaker=False
+        )
+        
+        # Create chat manager
+        self.chat_manager = autogen.GroupChatManager(
+            groupchat=self.group_chat,
+            llm_config=llm_config
+        )
+    
+    async def transfer_control(self, new_emotion: EmotionalState) -> None:
         """Transfer control to a different emotional agent"""
-        if new_emotion not in self.emotional_agents:
-            print(f"Warning: Emotion {new_emotion} not found in agents. Defaulting to NEUTRAL")
+        if new_emotion not in self.agents:
+            self.logger.warning(
+                f"Emotion {new_emotion} not found in agents. Defaulting to NEUTRAL"
+            )
             new_emotion = EmotionalState.NEUTRAL
             
         if self.current_controller:
-            self.current_controller.state.influence *= 0.8  # Decrease influence of previous controller
+            # Decrease influence of previous controller
+            self.current_controller.state.influence *= 0.8
             
-        self.current_controller = self.emotional_agents[new_emotion]
+        self.current_controller = self.agents[new_emotion]
         self.current_controller.state.influence = 1.0
         self.current_controller.state.last_active = datetime.now()
-
-    def _update_emotional_states(self, emotional_states: Dict[EmotionalState, float]) -> None:
-        """Update emotional states of agents"""
-        for emotion, influence in emotional_states.items():
-            if emotion in self.emotional_agents:
-                self.emotional_agents[emotion].state.influence = influence
-
-    async def _validate_response(self, message: str, response: str) -> str:
-        """Validate response against psychological theories"""
-        try:
-            evaluations = []
-            for theory_agent in self.theory_agents.values():
-                evaluation = await theory_agent.evaluate_response(message, response)
-                if evaluation:  # Only add valid evaluations
-                    evaluations.append(evaluation)
-            
-            # If no valid evaluations, return original response
-            if not evaluations:
-                return response
-                
-            # Check if any evaluation scores are low
-            if any(eval.get("alignment_score", 1.0) < 0.5 for eval in evaluations):
-                # For now, just log the suggestions
-                print("Theory suggestions:", [
-                    sugg for eval in evaluations 
-                    for sugg in eval.get("suggestions", [])
-                ])
-                # Could implement response adjustment logic here
-                
-            return response
-
-        except Exception as e:
-            import traceback
-            print(f"Error validating response: {str(e)}")
-            print("Stack trace:") 
-            print(traceback.format_exc())
-            return response  # Return original response if validation fails
+        
+        self.logger.info(
+            f"Control transferred to {new_emotion} agent for {self.persona_name}"
+        )
     
-    def _update_history(self, message: str, response: str, emotion: EmotionalState) -> None:
-        """Update control room history"""
+    async def process(self, message: str, context: Dict) -> List[EmotionalResponse]:
+        """Generate emotional responses through group discussion"""
         try:
-            self.state_history.append({
-                "timestamp": datetime.now(),
-                "message": message,
-                "response": response,
-                "controlling_emotion": emotion,
-                "emotional_states": {
-                    e: agent.state for e, agent in self.emotional_agents.items()
-                }
-            })
+            # Determine dominant emotion
+            dominant_emotion = await self._determine_dominant_emotion(message, context)
+            
+            # Transfer control if needed
+            if dominant_emotion != self.current_controller.emotion:
+                await self.transfer_control(dominant_emotion)
+            
+            # Create discussion prompt
+            prompt = self._create_discussion_prompt(message, context)
+            
+            # Run group discussion
+            chat_result = await self.chat_manager.run(prompt)
+            
+            # Process and structure responses
+            responses = await self._process_chat_result(chat_result, context)
+            
+            # Log processing
+            self.logger.info(
+                f"Emotional council generated {len(responses)} responses for {self.persona_name}"
+            )
+            
+            return responses
+            
         except Exception as e:
-            print(f"Error updating history: {str(e)}")
+            self.logger.error(f"Error in emotional council processing: {str(e)}")
+            return [self._create_fallback_response()]
+    
+    async def _determine_dominant_emotion(
+        self,
+        message: str,
+        context: Dict
+    ) -> EmotionalState:
+        """Determine which emotion should handle the message"""
+        try:
+            # This would be replaced with actual emotion detection logic
+            # For now, maintaining current controller with some probability
+            if self.current_controller.state.confidence > 0.7:
+                return self.current_controller.emotion
+            return EmotionalState.NEUTRAL
+        except Exception as e:
+            self.logger.error(f"Error determining dominant emotion: {str(e)}")
+            return EmotionalState.NEUTRAL
+
+class ResponseSynthesizer:
+    """Synthesizes emotional responses and theory validations"""
+    
+    def __init__(self, llm_config: dict):
+        self.llm_config = llm_config
+        self.logger = logging.getLogger(__name__)
+    
+    async def create_response(
+        self,
+        message: str,
+        emotional_responses: List[EmotionalResponse],
+        theory_validations: List[TheoryValidation],
+        context: Dict
+    ) -> ProcessedResponse:
+        """Create final response combining emotions and theories"""
+        try:
+            # Score responses against validations
+            scored_responses = self._score_responses(
+                emotional_responses,
+                theory_validations
+            )
+            
+            # Select best response
+            selected_response = self._select_response(scored_responses)
+            
+            # Apply theory modifications
+            modified_response = self._apply_theory_modifications(
+                selected_response,
+                theory_validations
+            )
+            
+            # Create processed response
+            return ProcessedResponse(
+                content=modified_response,
+                dominant_emotion=self._determine_dominant_emotion(
+                    emotional_responses
+                ),
+                emotional_states=self._calculate_emotional_states(
+                    emotional_responses
+                ),
+                theory_scores=self._calculate_theory_scores(
+                    theory_validations
+                ),
+                confidence=self._calculate_confidence(
+                    scored_responses,
+                    theory_validations
+                ),
+                processing_time=context.get("processing_time", 0.0),
+                context=context
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Error in response synthesis: {str(e)}")
+            return self._create_fallback_processed_response()
+
+class ControlRoom:
+    """Main orchestrator for the emotion-theory system"""
+    
+    def __init__(
+        self,
+        emotional_agents: List[EmotionalAgent],
+        theory_agents: List[TheoryAgent],
+        llm_config: dict,
+        persona_name: str = "Alex"
+    ):
+        # Initialize components
+        self.emotional_council = EmotionalCouncil(
+            emotional_agents,
+            llm_config,
+            persona_name
+        )
+        self.theory_council = TheoryCouncil(theory_agents, llm_config)
+        self.response_synthesizer = ResponseSynthesizer(llm_config)
+        
+        # Set persona name
+        self.persona_name = persona_name
+        
+        # Setup logging
+        self.logger = logging.getLogger(__name__)
+        
+        # Initialize state
+        self.conversation_history = []
+        self.current_context = {}
+        self.processing_stats = {
+            "total_interactions": 0,
+            "average_processing_time": 0.0,
+            "success_rate": 1.0
+        }
+    
+    @property
+    def current_controller(self) -> EmotionalAgent:
+        """Get the current controlling emotional agent"""
+        return self.emotional_council.current_controller
+    
+    async def process_message(self, message: str, context: Optional[Dict] = None) -> ProcessedResponse:
+        """Process a message through the complete emotion-theory pipeline"""
+        start_time = datetime.now()
+        context = context or {}
+        
+        try:
+            # Update context with persona information
+            self.current_context = self._update_context(context)
+            
+            # 1. Get emotional responses
+            emotional_responses = await self.emotional_council.process(
+                message,
+                self.current_context
+            )
+            
+            # 2. Get theory validations
+            theory_validations = await self.theory_council.validate(
+                message,
+                emotional_responses,
+                self.current_context
+            )
+            
+            # 3. Synthesize final response
+            response = await self.response_synthesizer.create_response(
+                message,
+                emotional_responses,
+                theory_validations,
+                self.current_context
+            )
+            
+            # 4. Add controller information
+            response.controlling_emotion = self.current_controller.emotion
+            
+            # 5. Update history and stats
+            self._update_history(message, response)
+            self._update_stats(start_time)
+            
+            return response
+            
+        except Exception as e:
+            self.logger.error(f"Error in control room processing: {str(e)}")
+            self._update_stats(start_time, success=False)
+            return self._create_fallback_response()
+    
+    def _update_context(self, new_context: Dict) -> Dict:
+        """Update current context with new information"""
+        return {
+            **self.current_context,
+            **new_context,
+            "persona_name": self.persona_name,
+            "current_controller": self.current_controller.emotion.value,
+            "timestamp": datetime.now(),
+            "interaction_count": len(self.conversation_history),
+            "processing_stats": self.processing_stats
+        }
+    
+    def _update_history(self, message: str, response: ProcessedResponse) -> None:
+        """Update conversation history"""
+        self.conversation_history.append({
+            "timestamp": datetime.now(),
+            "message": message,
+            "response": response,
+            "controlling_emotion": self.current_controller.emotion,
+            "context": self.current_context.copy()
+        })
+    
+    def _create_fallback_response(self) -> ProcessedResponse:
+        """Create a safe fallback response"""
+        return ProcessedResponse(
+            content=f"I understand. Could you tell me more about that?",
+            dominant_emotion=EmotionalState.NEUTRAL,
+            controlling_emotion=self.current_controller.emotion,
+            emotional_states={EmotionalState.NEUTRAL: 1.0},
+            theory_scores={"fallback": 1.0},
+            confidence=0.5,
+            processing_time=0.0,
+            context=self.current_context
+        )
+
+    def get_emotional_state(self) -> Dict[str, Any]:
+        """Get current emotional state information"""
+        return {
+            "controlling_emotion": self.current_controller.emotion,
+            "controller_influence": self.current_controller.state.influence,
+            "controller_confidence": self.current_controller.state.confidence,
+            "emotional_states": {
+                emotion: agent.state.influence
+                for emotion, agent in self.emotional_council.agents.items()
+            }
+        }
+
+    def get_persona_info(self) -> Dict[str, Any]:
+        """Get persona information"""
+        return {
+            "name": self.persona_name,
+            "current_state": self.get_emotional_state(),
+            "interaction_count": len(self.conversation_history),
+            "processing_stats": self.processing_stats
+        }
+
 
 # Example usage
 def create_base_personality() -> PersonalityTraits:

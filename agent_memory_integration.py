@@ -1,7 +1,6 @@
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from datetime import datetime
 from dataclasses import dataclass
-import asyncio
 
 from enhanced_memory_system import MemoryManager, Memory, MemoryType, MemoryPriority
 from base_agents import EmotionalAgent, TheoryAgent, ControlRoom, EmotionalState

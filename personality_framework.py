@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 from enum import Enum
 import math
 from datetime import datetime, timedelta
+
+from traits import PersonalityTraits
 
 class AttachmentStyle(Enum):
     SECURE = "secure"
@@ -19,13 +21,6 @@ class EmotionalState(Enum):
     ANXIOUS = "anxious"
     CONTENT = "content"
 
-@dataclass
-class PersonalityTraits:
-    openness: float  # 0-1
-    conscientiousness: float  # 0-1
-    extraversion: float  # 0-1
-    agreeableness: float  # 0-1
-    neuroticism: float  # 0-1
 
 @dataclass
 class SocialPenetrationLayer:
