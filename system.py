@@ -1,11 +1,13 @@
-from typing import Dict, List, Optional, Any
-from datetime import datetime
+
 import asyncio
 import logging
+
+from typing import Dict, List, Optional, Any
+from datetime import datetime
 from dataclasses import dataclass
 
-from interaction_context import InteractionContext, InteractionContextManager
-from enhanced_memory_system import MemoryManager
+from interactions.interaction_context import InteractionContext, InteractionContextManager
+from memory.enhanced_memory_system import MemoryManager
 from personality_framework import PersonalityFramework
 from base_agents import EmotionalState
 from state_management import StateManager

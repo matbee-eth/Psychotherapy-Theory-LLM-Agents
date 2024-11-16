@@ -1,8 +1,10 @@
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from datetime import datetime
+
 import autogen
 import json
+
+from dataclasses import dataclass, field
+from typing import Dict, List
+from datetime import datetime
 
 @dataclass
 class FormativeExperience:

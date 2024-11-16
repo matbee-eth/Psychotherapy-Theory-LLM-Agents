@@ -3,8 +3,8 @@ from datetime import datetime
 import json
 import autogen
 
-from enhanced_memory_system import Memory, MemoryType
-from interaction_context import InteractionContext
+from interactions.interaction_context import InteractionContext
+from memory.enhanced_memory_system import Memory, MemoryType
 from state_management import GeneratedResponse
 
 class MemoryAwareResponseGenerator:

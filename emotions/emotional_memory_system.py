@@ -1,12 +1,12 @@
-from datetime import datetime
+
 import json
 import math
+import autogen
+from datetime import datetime
 from typing import Dict, List, Optional
 
-import autogen
 from agent_memory_integration import EmotionalIntensity, EmotionalMemory, EmotionalValence
 from personality_framework import EmotionalState
-
 
 class EmotionalMemorySystem:
     """Manages emotional memories and their influence on personality"""

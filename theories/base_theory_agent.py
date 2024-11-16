@@ -1,9 +1,8 @@
-
-from datetime import datetime
 import json
-from typing import Dict, List, Optional
 import autogen
 
+from datetime import datetime
+from typing import Dict, List, Optional
 
 class TheoryAgent(autogen.AssistantAgent):
     """Base class for psychological theory agents with AutoGen integration"""

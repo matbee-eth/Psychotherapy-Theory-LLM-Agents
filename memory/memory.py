@@ -1,6 +1,7 @@
+import numpy as np
+
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
-import numpy as np
 from dataclasses import dataclass
 from base_agents import EmotionalAgent, EmotionalState, PersonalityTraits
 

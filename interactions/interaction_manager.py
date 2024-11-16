@@ -1,22 +1,24 @@
-from typing import Dict, List, Optional, Any
 import asyncio
 import logging
-from datetime import datetime
 import json
-from dataclasses import dataclass
+
+from typing import Dict, List, Any
+from datetime import datetime
 
 from interaction_context import (
     InteractionContext, 
     InteractionContextManager,
     MessageAnalysis
 )
+from memory.memory_manager import MemoryAwareResponseGenerator
 from message_analyzer_llm import (
     MessageAnalyzer,
     ContextEnricher,
     TheoryIntegrator
 )
-from state_management import ResponseGenerator, GeneratedResponse
-from state_management import StateManager, RelationshipStage
+
+from state_management import GeneratedResponse
+from state_management import StateManager
 from base_agents import EmotionalAgent, ControlRoom
 
 class InteractionManager:
@@ -28,7 +30,7 @@ class InteractionManager:
         self.message_analyzer = MessageAnalyzer(llm_config)
         self.context_enricher = ContextEnricher(llm_config)
         self.theory_integrator = TheoryIntegrator(llm_config)
-        self.response_generator = ResponseGenerator(llm_config)
+        self.response_generator = MemoryAwareResponseGenerator(llm_config)
         self.state_manager = StateManager()
         
         # Initialize control room with emotional agents

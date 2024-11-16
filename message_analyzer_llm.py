@@ -1,8 +1,9 @@
-from typing import Dict, List, Optional, Tuple
+
 import json
-from dataclasses import dataclass
-from interaction_context import MessageAnalysis, InteractionType
 import autogen
+
+from typing import Dict, List
+from interaction_context import MessageAnalysis, InteractionType
 
 class MessageAnalyzer:
     """Analyzes messages using LLM for deep understanding"""

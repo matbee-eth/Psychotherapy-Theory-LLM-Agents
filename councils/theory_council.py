@@ -1,6 +1,7 @@
+import autogen
+
 from typing import List
 
-import autogen
 from base_agents import EmotionalResponse, TheoryValidation
 from theories.emotional_intelligence_agent import EmotionalIntelligenceTheoryAgent
 from theories.social_penetration_agent import SocialPenetrationTheoryAgent

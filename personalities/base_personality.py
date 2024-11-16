@@ -1,9 +1,9 @@
+import math
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-import math
 from typing import Dict, List, Optional, Set
-
 
 class TraumaType(Enum):
     """Types of conversational experiences that can shape personality"""

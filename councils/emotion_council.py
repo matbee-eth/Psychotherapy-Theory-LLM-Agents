@@ -1,12 +1,11 @@
+import logging
+import autogen
 
 from datetime import datetime
-import logging
 from typing import Dict, List
 
-import autogen
 from base_agents import EmotionalAgent, EmotionalResponse
 from personality_framework import EmotionalState
-
 
 class EmotionalCouncil:
     """Manages emotional agent discussions and response generation"""

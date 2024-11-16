@@ -1,10 +1,11 @@
 import math
+
 from typing import Dict, List, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
-from enhanced_memory_system import Memory
-from interaction_context import MessageAnalysis
+from interactions.interaction_context import MessageAnalysis
+from memory.enhanced_memory_system import Memory
 from personality_framework import SocialPenetrationLayer
 from state import PsychologicalVariable, RelationshipStage
 

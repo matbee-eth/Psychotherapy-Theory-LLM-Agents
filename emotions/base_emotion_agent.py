@@ -1,13 +1,12 @@
 
+import autogen
+
 from datetime import datetime
 from typing import Dict, Optional
-
-import autogen
 
 from base_agents import AgentState
 from personality_framework import EmotionalState
 from traits import PersonalityTraits
-
 
 class EmotionalAgent(autogen.AssistantAgent):
     """Base class for emotion-driven agents"""
