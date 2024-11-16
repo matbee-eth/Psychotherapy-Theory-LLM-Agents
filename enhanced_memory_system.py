@@ -170,8 +170,15 @@ class MemoryStorageSystem:
             3. Relevant tags
             4. Enhanced content with psychological insights
             
-            Content: {json.dumps(content)}
-            Context: {json.dumps(context)}
+            Content:
+            ```json
+            {json.dumps(content)}
+            ```
+            
+            Context:
+            ```json
+            {json.dumps(context)}
+            ```
             
             Provide analysis as JSON with these fields."""
             
@@ -257,7 +264,10 @@ class MemoryStorageSystem:
             3. Psychological insights
             4. Potential consolidated memory
             
-            Memories: {json.dumps([m.content for m in recent_memories])}
+            Memories:
+            ```json
+            {json.dumps([m.content for m in recent_memories])}
+            ```
             
             Provide analysis as JSON with these fields."""
             

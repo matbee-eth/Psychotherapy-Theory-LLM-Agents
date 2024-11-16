@@ -1,20 +1,49 @@
+from enum import Enum
 from typing import Dict, List, Any
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from enhanced_memory_system import MemoryManager, Memory, MemoryType, MemoryPriority
 from base_agents import EmotionalAgent, TheoryAgent, ControlRoom, EmotionalState
 from personality_framework import PersonalityFramework
 
+class EmotionalValence(Enum):
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+    MIXED = "mixed"
+
+class EmotionalIntensity(Enum):
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+    EXTREME = "extreme"
+    
 @dataclass
 class EmotionalMemory:
-    """Structured emotional memory for agents"""
-    emotion: EmotionalState
-    intensity: float
-    trigger: str
-    context: Dict[str, Any]
+    """A discrete emotional memory that can influence personality development"""
+    id: str
     timestamp: datetime
-    agent_id: str
+    content: str  # The actual interaction/event
+    emotion: EmotionalState  # From your existing EmotionalState enum
+    valence: EmotionalValence
+    intensity: EmotionalIntensity
+    context: Dict[str, any]  # Contextual information
+    impact_scores: Dict[str, float] = field(default_factory=dict)  # Impact on different personality aspects
+    associated_thoughts: List[str] = field(default_factory=list)
+    reinforcement_count: int = 0
+    last_accessed: datetime = field(default_factory=datetime.now)
+    decay_rate: float = 0.1  # How quickly memory influence decays
+
+    def update_impact(self, aspect: str, impact: float):
+        """Update impact score for a personality aspect"""
+        if aspect not in self.impact_scores:
+            self.impact_scores[aspect] = 0
+        current_impact = self.impact_scores[aspect]
+        # New impact is weighted average with recent impact weighted more
+        self.impact_scores[aspect] = current_impact * 0.7 + impact * 0.3
+        self.reinforcement_count += 1
+        self.last_accessed = datetime.now()
 
 @dataclass
 class TheoryInsight:
