@@ -67,20 +67,6 @@ An advanced AI character system that combines emotional intelligence, psychologi
 - **numpy/scipy** for embedding operations
 - **DBSCAN** for pattern clustering
 
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/adaptive-personality-ai.git
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys and configurations
-```
-
 ## Usage
 
 ### Basic Usage
@@ -163,33 +149,6 @@ memory_id = await system.memory_manager.store_interaction(
 )
 ```
 
-## Development
-
-### Running Tests
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Run specific test category
-python -m pytest tests/test_emotional.py
-python -m pytest tests/test_theory.py
-python -m pytest tests/test_memory.py
-```
-
-### Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Implement your changes
-4. Write/update tests
-5. Submit a pull request
-
-## System Requirements
-
-- Python 3.10+
-- 16GB RAM recommended
-- GPU recommended for embedding operations
-- Internet connection for LLM API access
-
 ## Configuration
 
 The system can be configured through environment variables or a config file:
@@ -202,9 +161,8 @@ LOG_LEVEL=INFO
 ```
 
 ## Documentation
-
+(TODO)
 - [Architecture Overview](docs/architecture.md)
-- [API Reference](docs/api.md)
 - [Theory Integration](docs/theories.md)
 - [Memory System](docs/memory.md)
 
