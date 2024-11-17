@@ -1,3 +1,5 @@
+import json
+
 from enum import Enum
 from typing import Dict, List, Any
 from datetime import datetime
@@ -208,7 +210,7 @@ class MemoryAwareTheoryAgent(TheoryAgent):
             Provide analysis as JSON with 'alignment_score' and 'recommendations'."""
             
             # Get analysis from LLM
-            response = await self._analyze_alignment(message, response)
+            response = await self._analyze_alignment(prompt, response)
             
             return {
                 "theory_name": self.theory_name,
@@ -224,6 +226,37 @@ class MemoryAwareTheoryAgent(TheoryAgent):
                 "alignment_score": 0.5,
                 "suggestions": ["Error in analysis"],
                 "memory_based_insights": []
+            }
+    
+    async def _analyze_alignment(self, prompt: str, response: str) -> Dict:
+        """Analyze alignment between interaction and theoretical principles using LLM"""
+        try:
+            # Use the LLM to analyze the interaction
+            analysis = await self.llm.generate(prompt)
+            
+            # Parse LLM response into expected JSON format
+            # Note: Implementation depends on specific LLM integration
+            parsed_response = {
+                "alignment_score": 0.5,  # Default score
+                "recommendations": [],
+                "pattern_insights": []
+            }
+            
+            try:
+                # Attempt to parse LLM response as JSON
+                # Exact implementation will depend on LLM response format
+                parsed_response.update(json.loads(analysis))
+            except json.JSONDecodeError:
+                print("Failed to parse LLM response as JSON")
+            
+            return parsed_response
+            
+        except Exception as e:
+            print(f"Error in alignment analysis: {str(e)}")
+            return {
+                "alignment_score": 0.5,
+                "recommendations": ["Error analyzing alignment"],
+                "pattern_insights": []
             }
     
     def _format_emotional_patterns(self, memories: Dict[str, List[Memory]]) -> str:

@@ -8,3 +8,4 @@ class PersonalityTraits:
     conscientiousness: float  # 0-1
     extraversion: float  # 0-1
     agreeableness: float  # 0-1
+    neuroticism: float  # 0-1

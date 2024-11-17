@@ -4,7 +4,8 @@ import autogen
 from datetime import datetime
 from typing import Dict, List
 
-from base_agents import EmotionalAgent, EmotionalResponse
+from base_agents import EmotionalResponse
+from emotions.base_emotion_agent import EmotionalAgent
 from personality_framework import EmotionalState
 
 class EmotionalCouncil:

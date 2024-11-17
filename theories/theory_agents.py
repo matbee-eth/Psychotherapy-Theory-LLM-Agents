@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from base_agents import TheoryAgent
+from theories.base_theory_agent import TheoryAgent
 from theories.attachment_agent import AttachmentTheoryAgent
 from theories.social_penetration_agent import SocialPenetrationTheoryAgent
 from theories.uncertainty_reduction_agent import UncertaintyReductionTheoryAgent

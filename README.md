@@ -1,102 +1,242 @@
-# Persona Bot
-
-An emotionally intelligent conversational agent system that combines adaptive personality development, emotional processing, and communication theory to create more natural and empathetic interactions.
+# Adaptive Personality AI System
 
 ## Overview
 
-This project implements a sophisticated conversational agent that uses a multi-agent architecture combining emotional processing, communication theory, and adaptive personality development. It leverages AutoGen for enhanced multi-agent interactions and implements both a "society of mind" approach to emotional intelligence and dynamic personality adaptation.
+An advanced AI character system that combines emotional intelligence, psychological theory, and adaptive personality development to create natural, psychologically-grounded interactions. The system uses a sophisticated multi-agent architecture built on AutoGen, implementing both a "society of mind" approach to emotional intelligence and dynamic personality adaptation through experience-based learning.
 
-## Key Components
+## Key Features
 
-### 1. Adaptive Personality System
-- Develops personality adaptations based on interaction history
-- Processes emotional memories and trauma patterns
-- Maintains psychological coherence
-- Modifies responses based on personality development
+### Emotional Intelligence
+- Multi-agent emotional processing system
+- Dynamic emotional state management
+- Emotionally authentic responses
+- Context-aware emotional adaptation
 
-### 2. Memory Integration
-- Emotional memory tracking
-- Theory-based insights storage
-- Pattern recognition and analysis
-- Memory-aware agent interactions
+### Psychological Theory Integration
+- Attachment Theory implementation
+- Social Penetration Theory guidance
+- Uncertainty Reduction modeling
+- Emotional Intelligence framework
 
-### 3. Emotional Agents & Council
-The system includes multiple emotional agents representing different emotional states:
-- Joy (positive emotions)
-- Sadness (emotional depth and empathy)
-- Anger (boundary maintenance)
-- Anxiety (caution and consideration)
-- Neutral (emotional balance)
+### Adaptive Personality
+- Experience-based personality development
+- Memory-driven adaptations
+- Emergent behavioral patterns
+- Natural psychological growth
 
-The Emotional Council manages group discussions between emotional agents, transfers control based on dominant emotions, and generates coordinated emotional responses.
+### Memory System
+- Sophisticated emotional memory processing
+- Pattern recognition and clustering
+- Experience-based learning
+- Long-term relationship memory
 
-### 4. Theory Agents & Council
-Communication theory agents that guide interactions:
-- Social Penetration Theory
-- Attachment Theory
-- Uncertainty Reduction Theory
-- Emotional Intelligence Theory
+## Architecture
 
-The Theory Council validates emotional responses against communication theories through collaborative agent discussions.
+### Core Components
 
-### 5. Control Room
-- Manages interaction between emotional and theory agents
-- Memory-aware control transfers
-- Adaptive response generation
-- State history tracking
-- Coordinates council interactions
+1. **Control Room**
+   - Orchestrates system components
+   - Manages state and context
+   - Coordinates agent interactions
+   - Processes user input
 
-## Technical Details
+2. **Emotional Council**
+   - Joy (positive emotions)
+   - Sadness (emotional depth)
+   - Anger (boundaries)
+   - Anxiety (caution)
+   - Neutral (balance)
 
-- Built with Python 3.8+
-- Uses OpenAI's GPT-4 for language processing
-- Leverages Microsoft's AutoGen framework for multi-agent discussions
-- Implements async/await pattern for efficient processing
-- Includes comprehensive memory management system
+3. **Theory Council**
+   - Attachment Theory Agent
+   - Social Penetration Theory Agent
+   - Uncertainty Reduction Agent
+   - Emotional Intelligence Agent
 
-## Setup
+4. **Memory System**
+   - Emotional memory tracking
+   - Experience clustering
+   - Pattern recognition
+   - Relationship history
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Configure your OpenAI API key in the configuration
-4. Initialize the system using the provided initialization functions
+## Technologies Used
 
-## Usage Example
+- **Python 3.10+**
+- **AutoGen** for multi-agent orchestration
+- **memoripy** for memory management
+- **numpy/scipy** for embedding operations
+- **DBSCAN** for pattern clustering
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/adaptive-personality-ai.git
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys and configurations
+```
+
+## Usage
+
+### Basic Usage
 ```python
-# Initialize the system
-llm_config = {
-    "timeout": 600,
-    "cache_seed": 42,
-    "config_list": [
-        {
-            "model": "gpt-4",
-            "api_key": "YOUR_API_KEY"
-        }
-    ],
-    "temperature": 0.7
-}
+from system import IntegratedSystem
+from config import SystemConfig
 
-# Create adaptive personality system
-adaptive_system = AdaptivePersonalitySystem(llm_config)
+# Initialize system
+config = SystemConfig(
+    llm_config={
+        "temperature": 0.7,
+        "max_tokens": 800,
+        "model": "gpt-4"
+    }
+)
 
-# Initialize councils
-emotional_council = EmotionalCouncil(emotional_agents, llm_config, "persona")
-theory_council = TheoryCouncil()
+system = IntegratedSystem(config)
 
-# Initialize control room
-control_room = initialize_alex_system(llm_config)
-autogen_system = AutoGenControlRoom(control_room, llm_config)
-
-# Process messages
-responses = await emotional_council.process(message, context)
-validation = await theory_council.validate(message, responses)
-result = await autogen_system.process_input(
-    message="Your message here",
-    context={},
-    emotional_responses=responses,
-    theory_validation=validation
+# Process interaction
+result = await system.process_interaction(
+    "I've been feeling anxious about my new job, but I'm excited about the opportunity."
 )
 ```
+
+### Advanced Configuration
+```python
+# Configure emotional agents
+emotional_config = {
+    "joy": {"base_influence": 0.7},
+    "sadness": {"base_influence": 0.5},
+    "anger": {"base_influence": 0.3},
+    "anxiety": {"base_influence": 0.4}
+}
+
+# Configure theory agents
+theory_config = {
+    "attachment": True,
+    "social_penetration": True,
+    "uncertainty_reduction": True,
+    "emotional_intelligence": True
+}
+
+# Initialize with custom configuration
+system = IntegratedSystem(
+    config=SystemConfig(
+        llm_config=llm_config,
+        emotional_config=emotional_config,
+        theory_config=theory_config
+    )
+)
+```
+
+## Core Features Implementation
+
+### 1. Emotional Processing
+```python
+# Example emotional processing
+emotional_responses = await system.emotional_council.process(
+    message="I trust you enough to share this with you.",
+    context={"relationship_stage": "developing"}
+)
+```
+
+### 2. Theory Integration
+```python
+# Example theory validation
+theory_validation = await system.theory_council.validate(
+    message=message,
+    emotional_responses=emotional_responses
+)
+```
+
+### 3. Memory Management
+```python
+# Example memory storage
+memory_id = await system.memory_manager.store_interaction(
+    message=message,
+    response=response,
+    context=context
+)
+```
+
+## Development
+
+### Running Tests
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test category
+python -m pytest tests/test_emotional.py
+python -m pytest tests/test_theory.py
+python -m pytest tests/test_memory.py
+```
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Implement your changes
+4. Write/update tests
+5. Submit a pull request
+
+## System Requirements
+
+- Python 3.10+
+- 16GB RAM recommended
+- GPU recommended for embedding operations
+- Internet connection for LLM API access
+
+## Configuration
+
+The system can be configured through environment variables or a config file:
+
+```env
+LLM_MODEL=gpt-4
+LLM_TEMPERATURE=0.7
+MEMORY_STORAGE_PATH=./storage
+LOG_LEVEL=INFO
+```
+
+## Documentation
+
+- [Architecture Overview](docs/architecture.md)
+- [API Reference](docs/api.md)
+- [Theory Integration](docs/theories.md)
+- [Memory System](docs/memory.md)
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+- Built with Microsoft's AutoGen framework
+- Psychological theories based on established research
+- Memory system inspired by cognitive architecture research
+
+## Support
+
+- GitHub Issues for bug reports and feature requests
+- Discussions for general questions
+- Wiki for additional documentation
+
+## Future Development
+
+1. **Enhanced Pattern Recognition**
+   - Hierarchical clustering
+   - Sub-pattern detection
+   - Complex pattern relationships
+
+2. **Advanced Analysis**
+   - Deeper psychological understanding
+   - Improved pattern recognition
+   - Enhanced adaptation tracking
+
+3. **System Optimization**
+   - Improved embedding operations
+   - Enhanced clustering efficiency
+   - Refined response generation

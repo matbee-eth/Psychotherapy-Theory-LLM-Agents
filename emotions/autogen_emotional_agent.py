@@ -2,10 +2,7 @@ import autogen
 
 from typing import Dict, List
 
-from base_agents import (
-    EmotionalAgent, 
-)
-
+from emotions.base_emotion_agent import EmotionalAgent
 class AutoGenEmotionalAgent(autogen.AssistantAgent):
     """Wrapper for EmotionalAgent to work with AutoGen"""
     

@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from base_agents import TheoryAgent
+from theories.base_theory_agent import TheoryAgent
 
 
 class AttachmentTheoryAgent(TheoryAgent):

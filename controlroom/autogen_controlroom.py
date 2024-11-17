@@ -3,7 +3,7 @@ import autogen
 from typing import Dict, Optional
 from autogen.agentchat.contrib.society_of_mind_agent import SocietyOfMindAgent
 
-from base_agents import ControlRoom
+from controlroom.controlroom import ControlRoom
 from emotions.base_emotion_agent import EmotionalAgent
 
 class AutoGenControlRoom:

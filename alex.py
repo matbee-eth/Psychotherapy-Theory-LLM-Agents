@@ -1,13 +1,13 @@
 import os
-from emotions.autogen_emotional_agent import AutoGenControlRoom
 from base_agents import (
-    EmotionalAgent,
-    TheoryAgent,
-    ControlRoom,
-    PersonalityTraits,
     EmotionalState
 )
+from controlroom.autogen_controlroom import AutoGenControlRoom
+from controlroom.controlroom import ControlRoom
+from emotions.base_emotion_agent import EmotionalAgent
 from emotions.joy_agent import create_joy_agent
+from theories.base_theory_agent import TheoryAgent
+from traits import PersonalityTraits
 
 def initialize_alex_system(llm_config: dict) -> ControlRoom:
     """Initialize Alex's control room with emotional and theory agents"""
@@ -135,6 +135,7 @@ def initialize_alex_system(llm_config: dict) -> ControlRoom:
     
     # Initialize control room
     control_room = ControlRoom(
+        llm_config=llm_config,
         persona_name=persona_name,
         emotional_agents=emotional_agents,
         theory_agents=theory_agents,

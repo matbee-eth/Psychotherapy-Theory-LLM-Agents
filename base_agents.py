@@ -1,18 +1,12 @@
-
 import json
 import logging
 import autogen
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from datetime import datetime
 
-from councils.emotion_council import EmotionalCouncil
-from councils.theory_council import TheoryCouncil
-from emotions.base_emotion_agent import EmotionalAgent
 from personality_framework import EmotionalState
-from theories.base_theory_agent import TheoryAgent
-from traits import PersonalityTraits
 
 @dataclass
 class AgentState:

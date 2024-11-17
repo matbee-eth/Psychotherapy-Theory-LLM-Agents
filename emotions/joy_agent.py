@@ -1,4 +1,5 @@
-from base_agents import EmotionalAgent, EmotionalState
+from base_agents import EmotionalState
+from emotions.base_emotion_agent import EmotionalAgent
 from personality_framework import PersonalityTraits
 
 def create_joy_agent(llm_config: dict, personality: PersonalityTraits) -> EmotionalAgent:
