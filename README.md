@@ -166,21 +166,11 @@ LOG_LEVEL=INFO
 - [Theory Integration](docs/theories.md)
 - [Memory System](docs/memory.md)
 
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
 ## Acknowledgments
 
 - Built with Microsoft's AutoGen framework
 - Psychological theories based on established research
 - Memory system inspired by cognitive architecture research
-
-## Support
-
-- GitHub Issues for bug reports and feature requests
-- Discussions for general questions
-- Wiki for additional documentation
 
 ## Future Development
 

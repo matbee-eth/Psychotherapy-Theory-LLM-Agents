@@ -410,3 +410,4 @@ class ResponseOptimizer:
 2. Bowlby, J. (1969). Attachment and Loss
 3. Altman & Taylor (1973). Social Penetration Theory
 4. Berger & Calabrese (1975). Uncertainty Reduction Theory
+5. Andy Zou et al. (2023). Representation Engineering: A Top-Down Approach to AI Transparency. arXiv:2310.01405 [GitHub](https://github.com/andyzoujm/representation-engineering)
