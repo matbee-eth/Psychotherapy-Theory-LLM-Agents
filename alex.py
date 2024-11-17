@@ -1,13 +1,16 @@
+# Example usage of the system as Alex.
+# Alex is a persona that tests the combination of emotional intelligence, psychological theory, and adaptive personality development.
+
 import os
-from base_agents import (
+from src.base_agents import (
     EmotionalState
 )
-from controlroom.autogen_controlroom import AutoGenControlRoom
-from controlroom.controlroom import ControlRoom
-from emotions.base_emotion_agent import EmotionalAgent
-from emotions.joy_agent import create_joy_agent
-from theories.base_theory_agent import TheoryAgent
-from traits import PersonalityTraits
+from src.controlroom.autogen_controlroom import AutoGenControlRoom
+from src.controlroom.controlroom import ControlRoom
+from src.emotions.base_emotion_agent import EmotionalAgent
+from src.emotions.joy_agent import create_joy_agent
+from src.theories.base_theory_agent import TheoryAgent
+from src.traits import PersonalityTraits
 
 def initialize_alex_system(llm_config: dict) -> ControlRoom:
     """Initialize Alex's control room with emotional and theory agents"""
