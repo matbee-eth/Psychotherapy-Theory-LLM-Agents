@@ -3,8 +3,8 @@ import autogen
 from typing import Dict, Optional
 from autogen.agentchat.contrib.society_of_mind_agent import SocietyOfMindAgent
 
-from controlroom.controlroom import ControlRoom
-from emotions.base_emotion_agent import EmotionalAgent
+from .controlroom import ControlRoom
+from ..emotions.base_emotion_agent import EmotionalAgent
 
 class AutoGenControlRoom:
     """Enhanced ControlRoom using AutoGen's SocietyOfMindAgent pattern"""
@@ -28,7 +28,7 @@ class AutoGenControlRoom:
         """Create the assistant agents for each emotion"""
         # Create emotional assistants
         self.emotional_assistants = {}
-        for emotion, agent in self.control_room.emotional_agents.items():
+        for emotion, agent in self.control_room.emotional_council.agents.items():
             # Create assistant for this emotion
             print("AutoGenControlRoom _setup_agents: Creating assistant for", emotion.value)
             assistant = autogen.AssistantAgent(
@@ -141,6 +141,7 @@ Share your perspective."""
 
             # Get final response through control room
             final_response = await self.control_room.process_input(
+                self.user_proxy,
                 message=message,
                 context=context
             )

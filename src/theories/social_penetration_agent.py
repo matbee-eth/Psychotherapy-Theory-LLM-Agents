@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-from theories.base_theory_agent import TheoryAgent
+from .base_theory_agent import TheoryAgent
 
 class SocialPenetrationTheoryAgent(TheoryAgent):
     """Agent specializing in Social Penetration Theory analysis"""

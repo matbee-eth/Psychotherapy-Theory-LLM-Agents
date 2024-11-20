@@ -4,9 +4,9 @@ import autogen
 from datetime import datetime
 from typing import Dict, List
 
-from base_agents import EmotionalResponse
-from emotions.base_emotion_agent import EmotionalAgent
-from personality_framework import EmotionalState
+from ..base_agents import EmotionalResponse
+from ..emotions.base_emotion_agent import EmotionalAgent
+from ..personality_framework import EmotionalState
 
 class EmotionalCouncil:
     """Manages emotional agent discussions and response generation"""
@@ -66,8 +66,8 @@ class EmotionalCouncil:
             # Create discussion prompt
             prompt = self._create_discussion_prompt(message, context)
             
-            # Run group discussion
-            chat_result = await self.chat_manager.run(prompt)
+            # Run group discussion using initiate_chat instead of run
+            chat_result = self.chat_manager.initiate_chat(prompt)
             
             # Process and structure responses
             responses = await self._process_chat_result(chat_result, context)
@@ -80,9 +80,90 @@ class EmotionalCouncil:
             return responses
             
         except Exception as e:
-            self.logger.error(f"Error in emotional council processing: {str(e)}")
+            self.logger.error(f"Error in emotional council processing: {str(e)}", exc_info=True)
             return [self._create_fallback_response()]
-    
+        
+    def _create_discussion_prompt(self, message: str, context: Dict) -> str:
+        """Create a prompt for the emotional agents' discussion"""
+        prompt = (
+            f"As emotional aspects of {self.persona_name}'s personality, discuss how to respond "
+            f"to the following message while considering the current context.\n\n"
+            f"Message: {message}\n"
+            f"Current emotion: {self.current_controller.emotion}\n"
+            "Context: " + ", ".join(f"{k}: {v}" for k, v in context.items()) + "\n\n"
+            "Each agent should propose a response aligned with their emotional perspective. "
+            "Consider:\n"
+            "1. The emotional impact of the message\n"
+            "2. How your emotional state would react\n"
+            "3. An appropriate response maintaining personality consistency\n\n"
+            "Provide responses in the format:\n"
+            "Emotion: [your emotion]\n"
+            "Response: [your suggested response]\n"
+            "Confidence: [0-1 score]\n"
+        )
+        return prompt
+
+    async def _process_chat_result(self, chat_result: dict, context: Dict) -> List[EmotionalResponse]:
+        """Process the group chat results into structured emotional responses"""
+        responses = []
+        
+        try:
+            # Extract responses from chat results
+            chat_messages = chat_result.get("messages", [])
+            
+            for message in chat_messages:
+                # Skip system or non-agent messages
+                if not isinstance(message.get("content"), str):
+                    continue
+                    
+                content = message["content"]
+                
+                # Parse message content for emotional response components
+                try:
+                    # Basic parsing - could be enhanced with regex
+                    emotion_line = [l for l in content.split("\n") if l.startswith("Emotion:")][0]
+                    response_line = [l for l in content.split("\n") if l.startswith("Response:")][0]
+                    confidence_line = [l for l in content.split("\n") if l.startswith("Confidence:")][0]
+                    
+                    emotion = emotion_line.split(":")[1].strip()
+                    response_text = response_line.split(":")[1].strip()
+                    confidence = float(confidence_line.split(":")[1].strip())
+                    
+                    response = EmotionalResponse(
+                        content=response_text,
+                        emotion=EmotionalState[emotion.upper()],
+                        confidence=confidence,
+                        influence=0.5,  # Added
+                        intensity=0.5,  # Added
+                        reasoning="Response generated from emotional discussion",  # Added
+                        suggestions=[],  # Added
+                        timestamp=datetime.now()  # Added
+                    )
+                    responses.append(response)
+                    
+                except (IndexError, ValueError) as e:
+                    self.logger.warning(f"Failed to parse agent response: {str(e)}")
+                    continue
+        
+        except Exception as e:
+            self.logger.error(f"Error processing chat results: {str(e)}", exc_info=True)
+            responses.append(self._create_fallback_response())
+        
+        return responses
+
+    def _create_fallback_response(self) -> EmotionalResponse:
+        """Create a neutral fallback response for error cases"""
+        return EmotionalResponse(
+            content="I'm not sure how to respond to that right now.",
+            emotion=EmotionalState.NEUTRAL,
+            confidence=0.5,
+            influence=0.5,  # Added
+            intensity=0.5,  # Added
+            reasoning="Fallback response due to error",  # Added
+            suggestions=[],  # Added
+            timestamp=datetime.now()  # Added
+        )
+
     async def _determine_dominant_emotion(
         self,
         message: str,
@@ -96,5 +177,5 @@ class EmotionalCouncil:
                 return self.current_controller.emotion
             return EmotionalState.NEUTRAL
         except Exception as e:
-            self.logger.error(f"Error determining dominant emotion: {str(e)}")
+            self.logger.error(f"Error determining dominant emotion: {str(e)}", exc_info=True)
             return EmotionalState.NEUTRAL

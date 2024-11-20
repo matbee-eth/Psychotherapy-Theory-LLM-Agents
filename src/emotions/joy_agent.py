@@ -1,6 +1,6 @@
-from base_agents import EmotionalState
-from emotions.base_emotion_agent import EmotionalAgent
-from personality_framework import PersonalityTraits
+from ..base_agents import EmotionalState  # Assuming base_agents.py is in src/
+from .base_emotion_agent import EmotionalAgent  # base_emotion_agent.py is in same directory
+from ..personality_framework import PersonalityTraits  # personality_framework.py is in src/
 
 def create_joy_agent(llm_config: dict, personality: PersonalityTraits) -> EmotionalAgent:
     """Create a joy agent with the specified personality traits"""

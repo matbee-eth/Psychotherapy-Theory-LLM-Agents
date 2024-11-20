@@ -85,7 +85,7 @@ class InteractionManager:
             return result
             
         except Exception as e:
-            self.logger.error(f"Error processing interaction: {str(e)}")
+            self.logger.error(f"Error processing interaction: {str(e)}", exc_info=True)
             self._update_metrics(False, interaction_start)
             return {
                 "error": str(e),
@@ -122,7 +122,7 @@ class InteractionManager:
             return analysis
             
         except Exception as e:
-            self.logger.error(f"Error in message analysis: {str(e)}")
+            self.logger.error(f"Error in message analysis: {str(e)}", exc_info=True)
             raise
     
     async def _update_state(
@@ -152,7 +152,7 @@ class InteractionManager:
             return state_update
             
         except Exception as e:
-            self.logger.error(f"Error updating state: {str(e)}")
+            self.logger.error(f"Error updating state: {str(e)}", exc_info=True)
             raise
     
     async def _generate_response(
@@ -174,7 +174,7 @@ class InteractionManager:
             return response
             
         except Exception as e:
-            self.logger.error(f"Error generating response: {str(e)}")
+            self.logger.error(f"Error generating response: {str(e)}", exc_info=True)
             raise
     
     async def _update_control_room(
@@ -199,7 +199,7 @@ class InteractionManager:
             context.add_processing_step("Control room update completed")
             
         except Exception as e:
-            self.logger.error(f"Error updating control room: {str(e)}")
+            self.logger.error(f"Error updating control room: {str(e)}", exc_info=True)
             raise
     
     async def _finalize_interaction(
@@ -241,7 +241,7 @@ class InteractionManager:
             return result
             
         except Exception as e:
-            self.logger.error(f"Error finalizing interaction: {str(e)}")
+            self.logger.error(f"Error finalizing interaction: {str(e)}", exc_info=True)
             raise
     
     def _initialize_emotional_agents(

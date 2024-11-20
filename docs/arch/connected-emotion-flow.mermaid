@@ -1,0 +1,106 @@
+graph TD
+    %% User Input Flow
+    U[User Input] -->|Message| S[State Analyzer]
+    S -->|Analyzed Input| EC[Emotional Council]
+    
+    %% Emotional Council and Agents
+    subgraph "Emotional System"
+        EC -->|Distributes Input| EA[Emotional Agents Hub]
+        
+        EA -->|Input| JOY[Joy Agent]
+        EA -->|Input| SAD[Sadness Agent]
+        EA -->|Input| ANG[Anger Agent]
+        EA -->|Input| FEA[Fear Agent]
+        EA -->|Input| NEU[Neutral Agent]
+        
+        %% Agent Interconnections
+        JOY -->|Influence| EA
+        SAD -->|Influence| EA
+        ANG -->|Influence| EA
+        FEA -->|Influence| EA
+        NEU -->|Influence| EA
+        
+        %% Each Agent's Internal Processing
+        subgraph "Agent Processing"
+            JOY -->|Base Vector| JV[Joy Vector]
+            SAD -->|Base Vector| SV[Sadness Vector]
+            ANG -->|Base Vector| AV[Anger Vector]
+            FEA -->|Base Vector| FV[Fear Vector]
+            NEU -->|Base Vector| NV[Neutral Vector]
+            
+            %% Vector Combination
+            JV --> VC[Vector Combiner]
+            SV --> VC
+            AV --> VC
+            FV --> VC
+            NV --> VC
+        end
+    end
+    
+    %% Control Vector System
+    subgraph "Vector Processing"
+        VC -->|Combined Vectors| CV[Control Vector Generator]
+        T[Time Factors] --> CV
+        R[Relationship Context] --> CV
+        
+        CV --> M[Vector Modifier]
+        
+        %% Theory Integration
+        subgraph "Theory System"
+            AT[Attachment Theory]
+            SPT[Social Penetration]
+            URT[Uncertainty Reduction]
+            EIT[Emotional Intelligence]
+            
+            AT --> TV[Theory Validator]
+            SPT --> TV
+            URT --> TV
+            EIT --> TV
+        end
+        
+        TV -->|Validation| M
+    end
+    
+    %% Memory System
+    subgraph "Memory Integration"
+        MS[Memory Store]
+        VS[Vector Store]
+        RS[Relationship State]
+        
+        MS --> VS
+        VS --> RS
+        RS -->|Context| M
+        
+        %% Memory Feedback
+        MS -->|History| EC
+        VS -->|Vector History| EA
+        RS -->|Relationship Context| EC
+    end
+    
+    %% Response Generation
+    M -->|Final Vector| RG[Response Generator]
+    EC -->|Emotional Context| RG
+    RS -->|Memory Context| RG
+    
+    %% Output Flow
+    RG --> OUT[Generated Response]
+    OUT --> U2[User]
+    
+    %% State Updates
+    OUT -->|Update| MS
+    OUT -->|Update| VS
+    OUT -->|Update| RS
+    OUT -->|Feedback| EC
+    
+    %% Styling
+    classDef emotional fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef vector fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef memory fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef theory fill:#ffb,stroke:#333,stroke-width:2px;
+    classDef council fill:#ffd,stroke:#333,stroke-width:2px;
+    
+    class JOY,SAD,ANG,FEA,NEU emotional;
+    class JV,SV,AV,FV,NV,VC,CV,M vector;
+    class MS,VS,RS memory;
+    class AT,SPT,URT,EIT theory;
+    class EC,EA council;

@@ -1,6 +1,6 @@
 import logging
 
-from theories.base_theory_agent import TheoryAgent
+from .base_theory_agent import TheoryAgent
 
 
 class EmotionalIntelligenceTheoryAgent(TheoryAgent):

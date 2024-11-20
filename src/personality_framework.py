@@ -4,7 +4,7 @@ from enum import Enum
 import math
 from datetime import datetime, timedelta
 
-from traits import PersonalityTraits
+from .traits import PersonalityTraits
 
 class AttachmentStyle(Enum):
     SECURE = "secure"

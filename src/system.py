@@ -162,7 +162,7 @@ class IntegratedSystem:
             return result
             
         except Exception as e:
-            self.logger.error(f"Error processing interaction: {str(e)}")
+            self.logger.error(f"Error processing interaction: {str(e)}", exc_info=True)
             return {
                 "error": str(e),
                 "status": "failed"

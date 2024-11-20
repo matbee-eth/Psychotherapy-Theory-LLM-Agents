@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 from datetime import datetime
 
-from personality_framework import EmotionalState
+from .personality_framework import EmotionalState
 
 @dataclass
 class AgentState:
@@ -100,6 +100,7 @@ Always provide your analysis in JSON format with:
     async def create_response(
         self,
         message: str,
+        sender: autogen.AssistantAgent,
         emotional_responses: List[EmotionalResponse],
         theory_validations: List[TheoryValidation],
         context: Dict
@@ -123,7 +124,7 @@ Always provide your analysis in JSON format with:
             )
             
             # 3. Get synthesis from LLM
-            synthesis = await self._get_synthesis(prompt)
+            synthesis = await self._get_synthesis(sender, prompt)
             
             # 4. Create processed response
             response = ProcessedResponse(
@@ -143,7 +144,7 @@ Always provide your analysis in JSON format with:
             return response
             
         except Exception as e:
-            self.logger.error(f"Error in response synthesis: {str(e)}")
+            self.logger.error(f"Error in response synthesis: {str(e)}", exc_info=True)  # Add exc_info=True
             return self._create_fallback_response(context)
     
     def _score_responses(
@@ -210,7 +211,7 @@ THEORY VALIDATIONS:
 
 CONTEXT:
 ```json
-{json.dumps(context, indent=2)}
+{json.dumps(context, indent=2, default=str)}
 ```
 
 Create a response that:
@@ -222,12 +223,15 @@ Create a response that:
 
 Provide your synthesis in the specified JSON format."""
     
-    async def _get_synthesis(self, prompt: str) -> Dict:
+    async def _get_synthesis(self, sender: autogen.AssistantAgent, prompt: str) -> Dict:
         """Get synthesis from LLM"""
         try:
-            # Get LLM response
-            response = await self.generate_response(prompt)
-            
+            # Get response using receive
+            response = self.receive(
+                message={"role": "user", "content": prompt, "name": sender.name},
+                sender=sender
+            )
+            print(response)
             # Parse JSON response
             synthesis = json.loads(response)
             
@@ -244,7 +248,7 @@ Provide your synthesis in the specified JSON format."""
             return synthesis
             
         except Exception as e:
-            self.logger.error(f"Error getting synthesis: {str(e)}")
+            self.logger.error(f"Error getting synthesis: {str(e)}", exc_info=True)
             return self._create_fallback_synthesis()
     
     def _create_fallback_synthesis(self) -> Dict:

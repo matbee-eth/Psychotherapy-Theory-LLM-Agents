@@ -4,13 +4,15 @@ import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from base_agents import ProcessedResponse, ResponseSynthesizer
-from councils.emotion_council import EmotionalCouncil
-from councils.theory_council import TheoryCouncil
-from emotions.base_emotion_agent import EmotionalAgent
-from personality_framework import EmotionalState
-from theories.base_theory_agent import TheoryAgent
-from traits import PersonalityTraits
+import autogen
+
+from ..base_agents import ProcessedResponse, ResponseSynthesizer
+from ..councils.emotion_council import EmotionalCouncil
+from ..councils.theory_council import TheoryCouncil
+from ..emotions.base_emotion_agent import EmotionalAgent
+from ..personality_framework import EmotionalState
+from ..theories.base_theory_agent import TheoryAgent
+from ..traits import PersonalityTraits
 
 class ControlRoom:
     """Main orchestrator for the emotion-theory system"""
@@ -28,6 +30,7 @@ class ControlRoom:
             llm_config,
             persona_name
         )
+        self.emotional_agents = emotional_agents
         self.theory_council = TheoryCouncil(theory_agents, llm_config)
         self.response_synthesizer = ResponseSynthesizer(llm_config)
         
@@ -51,7 +54,7 @@ class ControlRoom:
         """Get the current controlling emotional agent"""
         return self.emotional_council.current_controller
     
-    async def process_message(self, message: str, context: Optional[Dict] = None) -> ProcessedResponse:
+    async def process_input(self, sender: autogen.AssistantAgent, message: str, context: Optional[Dict] = None) -> ProcessedResponse:
         """Process a message through the complete emotion-theory pipeline"""
         start_time = datetime.now()
         context = context or {}
@@ -76,6 +79,7 @@ class ControlRoom:
             # 3. Synthesize final response
             response = await self.response_synthesizer.create_response(
                 message,
+                sender,
                 emotional_responses,
                 theory_validations,
                 self.current_context
@@ -91,7 +95,7 @@ class ControlRoom:
             return response
             
         except Exception as e:
-            self.logger.error(f"Error in control room processing: {str(e)}")
+            self.logger.error(f"Error in control room processing: {str(e)}", exc_info=True)
             self._update_stats(start_time, success=False)
             return self._create_fallback_response()
     
@@ -150,7 +154,26 @@ class ControlRoom:
             "interaction_count": len(self.conversation_history),
             "processing_stats": self.processing_stats
         }
-
+    
+    def _update_stats(self, start_time: datetime, success: bool = True) -> None:
+        """Update processing statistics"""
+        processing_time = (datetime.now() - start_time).total_seconds()
+        
+        self.processing_stats["total_interactions"] += 1
+        
+        # Update average processing time
+        current_avg = self.processing_stats["average_processing_time"]
+        total = self.processing_stats["total_interactions"]
+        self.processing_stats["average_processing_time"] = (
+            (current_avg * (total - 1) + processing_time) / total
+        )
+        
+        # Update success rate
+        if not success:
+            current_success = self.processing_stats["success_rate"]
+            self.processing_stats["success_rate"] = (
+                (current_success * (total - 1) + 0) / total
+            )
 
 # Example usage
 def create_base_personality() -> PersonalityTraits:
@@ -190,3 +213,4 @@ def initialize_system(llm_config: dict) -> ControlRoom:
     # Create control room
     control_room = ControlRoom(emotional_agents, theory_agents)
     return control_room
+

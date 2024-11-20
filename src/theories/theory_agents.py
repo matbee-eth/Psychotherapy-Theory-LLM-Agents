@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from typing import List
 
-from theories.base_theory_agent import TheoryAgent
-from theories.attachment_agent import AttachmentTheoryAgent
-from theories.social_penetration_agent import SocialPenetrationTheoryAgent
-from theories.uncertainty_reduction_agent import UncertaintyReductionTheoryAgent
+from .base_theory_agent import TheoryAgent
+from .attachment_agent import AttachmentTheoryAgent
+from .social_penetration_agent import SocialPenetrationTheoryAgent
+from .uncertainty_reduction_agent import UncertaintyReductionTheoryAgent
 
 @dataclass
 class TheoryAnalysis:

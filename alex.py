@@ -2,15 +2,16 @@
 # Alex is a persona that tests the combination of emotional intelligence, psychological theory, and adaptive personality development.
 
 import os
-from src.base_agents import (
+from src.emotions.joy_agent import create_joy_agent
+from src.personality_framework import (
     EmotionalState
 )
 from src.controlroom.autogen_controlroom import AutoGenControlRoom
 from src.controlroom.controlroom import ControlRoom
+from src.base_agents import EmotionalState
 from src.emotions.base_emotion_agent import EmotionalAgent
-from src.emotions.joy_agent import create_joy_agent
+from src.personality_framework import PersonalityTraits
 from src.theories.base_theory_agent import TheoryAgent
-from src.traits import PersonalityTraits
 
 def initialize_alex_system(llm_config: dict) -> ControlRoom:
     """Initialize Alex's control room with emotional and theory agents"""
