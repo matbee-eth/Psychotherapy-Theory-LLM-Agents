@@ -30,7 +30,8 @@ class EmotionalCouncil:
         # Create chat manager
         self.chat_manager = autogen.GroupChatManager(
             groupchat=self.group_chat,
-            llm_config=llm_config
+            llm_config=llm_config,
+            human_input_mode="NEVER"
         )
     
     async def transfer_control(self, new_emotion: EmotionalState) -> None:
@@ -67,8 +68,7 @@ class EmotionalCouncil:
             prompt = self._create_discussion_prompt(message, context)
             
             # Run group discussion using initiate_chat instead of run
-            chat_result = self.chat_manager.initiate_chat(prompt)
-            
+            chat_result = await self.chat_manager.initiate_chat(recipient=self.current_controller, prompt=prompt)
             # Process and structure responses
             responses = await self._process_chat_result(chat_result, context)
             
