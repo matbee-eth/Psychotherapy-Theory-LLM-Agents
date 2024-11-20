@@ -14,6 +14,7 @@ class AttachmentStyle(Enum):
 
 class EmotionalState(Enum):
     HAPPY = "happy"
+    JOY = "happy"
     SAD = "sad"
     ANGRY = "angry"
     NEUTRAL = "neutral"

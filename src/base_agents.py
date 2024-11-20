@@ -174,7 +174,7 @@ Always provide your analysis in JSON format with:
             
             # Add scored response
             scored_responses.append({
-                "emotion": response.emotion.value,
+                "emotion": response.emotion,
                 "content": response.content,
                 "base_score": base_score,
                 "theory_scores": theory_scores,

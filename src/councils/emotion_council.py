@@ -18,9 +18,16 @@ class EmotionalCouncil:
         self.logger = logging.getLogger(__name__)
         self.current_controller = self.agents[EmotionalState.NEUTRAL]
         
+        # Create user proxy to initiate discussions
+        self.user_proxy = autogen.UserProxyAgent(
+            name="EmotionalCouncil",
+            system_message="Coordinator for emotional agent discussions",
+            human_input_mode="NEVER"
+        )
+
         # Initialize AutoGen group chat
         self.group_chat = autogen.GroupChat(
-            agents=list(self.agents.values()),
+            agents=[self.user_proxy] + list(self.agents.values()),
             messages=[],
             max_round=len(self.agents),
             speaker_selection_method="round_robin",
@@ -68,7 +75,7 @@ class EmotionalCouncil:
             prompt = self._create_discussion_prompt(message, context)
             
             # Run group discussion using initiate_chat instead of run
-            chat_result = await self.chat_manager.initiate_chat(recipient=self.current_controller, prompt=prompt)
+            chat_result = self.user_proxy.initiate_chat(self.chat_manager, message=prompt)
             # Process and structure responses
             responses = await self._process_chat_result(chat_result, context)
             
@@ -99,23 +106,23 @@ class EmotionalCouncil:
             "Provide responses in the format:\n"
             "Emotion: [your emotion]\n"
             "Response: [your suggested response]\n"
-            "Confidence: [0-1 score]\n"
+            "Confidence: [0.0-1.0 score if you are confident that your emotional response is appropriate]\n"
         )
         return prompt
 
     async def _process_chat_result(self, chat_result: dict, context: Dict) -> List[EmotionalResponse]:
         """Process the group chat results into structured emotional responses"""
         responses = []
-        
+        print("Emotional Council _process_chat_result:", chat_result)
         try:
             # Extract responses from chat results
-            chat_messages = chat_result.get("messages", [])
+            chat_messages = chat_result.chat_history  # Access the chat_history attribute directly
             
             for message in chat_messages:
                 # Skip system or non-agent messages
                 if not isinstance(message.get("content"), str):
                     continue
-                    
+                ""
                 content = message["content"]
                 
                 # Parse message content for emotional response components
@@ -131,7 +138,7 @@ class EmotionalCouncil:
                     
                     response = EmotionalResponse(
                         content=response_text,
-                        emotion=EmotionalState[emotion.upper()],
+                        emotion=message["name"],
                         confidence=confidence,
                         influence=0.5,  # Added
                         intensity=0.5,  # Added
@@ -175,7 +182,7 @@ class EmotionalCouncil:
             # For now, maintaining current controller with some probability
             if self.current_controller.state.confidence > 0.7:
                 return self.current_controller.emotion
-            return EmotionalState.NEUTRAL
+            return self.current_controller.emotion
         except Exception as e:
             self.logger.error(f"Error determining dominant emotion: {str(e)}", exc_info=True)
-            return EmotionalState.NEUTRAL
+            return self.current_controller.emotion

@@ -40,8 +40,8 @@ class TheoryCouncil:
         initial_message = self._create_validation_prompt(message, emotional_responses, context)
         
         # Initiate the group chat discussion
-        chat_result = self.manager.initiate_chat(
-            self.user_proxy,
+        chat_result = self.user_proxy.initiate_chat(
+            self.manager,
             message=initial_message
         )
         
